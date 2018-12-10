@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.demo.mapper.ResultPostilMapper">
+
+	<sql id="parameters">
+		id AS id,   apply_id  AS applyId,
+		 apply_name  AS applyName,
+		 approve_node AS approveNode,
+		 approver AS approver,
+		 caption AS caption,
+		 end_date AS endDate,
+		 flow_name AS flowName,
+		 start_date AS startDate,
+		 status AS status,
+		 summary AS summary
+	</sql>
+
+	<sql id="part" >
+		approval_name AS approvalName,
+		approval_result AS approvalResult,
+		postil AS postil
+	</sql>
+
+
+
+	<select id="getPostil" resultType="com.ssm.demo.entity.ResultPostil" parameterType="map">
+		select  <include refid="part"/>from resultpostil
+		where apply_id=#{applyId} AND  flow_name=#{flowName}
+	</select>
+
+
+
+	<insert id="startSave" useGeneratedKeys="true" keyProperty="id" parameterType="com.ssm.demo.dto.BasicsApproveDto">
+	  insert into resultpostil
+	  (id,
+	  apply_id,
+	  approval_name,
+	  approval_result,
+	  flow_name)
+	  values
+	  (#{id},
+	  #{applyId},
+	  #{approver},
+	  -1,
+	  #{flowName})
+	</insert>
+
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.ssm.demo.entity.ResultPostil">
+	  insert into resultpostil
+	  (id,
+	  apply_id,
+	  approval_name,
+	  approval_result,
+	  postil,
+	  flow_name,
+	  date_time)
+	  values
+	  (#{id},
+	  #{applyId},
+	  #{approvalName},
+	  #{approvalResult},
+	  #{postil},
+	  #{flowName},
+	  #{dateTime})
+	</insert>
+
+
+	<!--修改审批结果以及批注-->
+	<update id="updateByApplyId" parameterType="com.ssm.demo.dto.BasicsApproveDto">
+		update resultpostil
+		<set>
+			<if test="approvalResult !=null and approvalResult !=''">
+				approval_result=#{approvalResult},
+			</if>
+			<if test="postil!=null and postil!=''">
+				postil=#{postil},
+			</if>
+			<if test="dateTime!=null and dateTime!=''">
+				date_time=#{dateTime},
+			</if>
+		</set>
+		where apply_id=#{applyId} AND flow_name=#{flowName} AND approval_name=#{approver}
+	</update>
+
+
+</mapper>

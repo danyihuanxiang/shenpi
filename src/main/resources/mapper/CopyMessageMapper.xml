@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.demo.mapper.CopyMessageMapper">
+
+	<sql id="parameters">
+		basicsapprove.id AS id,
+		 basicsapprove.apply_id  AS applyId,
+		 basicsapprove.apply_name  AS applyName,
+		 basicsapprove.approver AS approver,
+		 basicsapprove.flow_name AS flowName,
+		 basicsapprove.status AS status,
+		 basicsapprove.common AS common,
+		 basicsapprove.start_time AS startTime,
+		 basicsapprove.end_time AS endTime,
+		 basicsapprove.caption_name AS captionName,
+		 basicsapprove.apply_time AS applyTime,
+		 basicsapprove.complete AS complete,
+		 basicsapprove.complete_time AS completeTime
+	</sql>
+
+       <!--抄送人查询要抄送的信息列表-->
+	<select id="copyMessagePage"  resultType="com.ssm.demo.entity.BasicsApprove">
+		select  <include refid="parameters"/> from copymessage
+		INNER JOIN basicsapprove
+		where copymessage.approve_id=basicsapprove.id
+		AND  copymessage.copy_name=#{copyName}
+		<if test="complete!=0">
+			AND   basicsapprove.complete=#{complete}
+		</if>
+		<if test="flowName!='全部' and flowName!='' ">
+			AND  basicsapprove.flow_name=#{flowName}
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		limit #{pageNum},#{pageSize}
+	</select>
+
+	<!--抄送人查询要抄送的次数-->
+	<select id="getCount" parameterType="java.util.Map" resultType="int">
+		select count(1)	from copymessage
+		INNER JOIN basicsapprove
+		where copymessage.approve_id=basicsapprove.id
+		AND  copymessage.copy_name=#{copyName}
+		<if test="complete!=0">
+			AND   basicsapprove.complete=#{complete}
+		</if>
+		<if test="flowName!='全部' and flowName!='' ">
+			AND  basicsapprove.flow_name=#{flowName}
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+	</select>
+
+
+
+
+
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.ssm.demo.entity.CopyMessage">
+	  insert into copymessage
+	  (id,
+	  copy_name,
+	  apply_name,
+	  apply_id,
+	  flow_name,
+	  approve_id)
+	  values
+	  (#{id},
+	  #{copyName},
+	  #{applyName},
+	  #{applyId},
+	  #{flowName},
+	  #{approveId})
+	</insert>
+
+
+</mapper>

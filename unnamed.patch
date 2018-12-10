@@ -1,0 +1,1184 @@
+Index: src/main/java/com/ssm/demo/entity/Comment.java
+===================================================================
+--- src/main/java/com/ssm/demo/entity/Comment.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/entity/Comment.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
+@@ -1,24 +0,0 @@
+-package com.ssm.demo.entity;
+-
+-import lombok.Data;
+-import org.springframework.web.multipart.MultipartFile;
+-
+-/**
+- * 评论实体类
+- */
+-
+-@Data
+-public class Comment {
+-
+-    private int id;
+-    private String commentName;//评论人
+-    private String replyName;//回复人
+-    private String commentTime;//评论时间
+-    private String commentNode;//评论的是哪个节点
+-    private String commentContent;//评论内容
+-    private MultipartFile contentFile;//评论文件
+-    private MultipartFile[] contentPhotos;//上传图片
+-    private String filePath;//评论文件路径
+-    private String photosPath;//评论图片路径
+-    private int foreignId;//其他表的主键id
+-}
+Index: src/main/java/com/ssm/demo/mapper/BasicsApproveMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/mapper/BasicsApproveMapper.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/mapper/BasicsApproveMapper.java	(date 1543849361048)
+@@ -1,6 +1,7 @@
+ package com.ssm.demo.mapper;
+ 
+ 
++import com.ssm.demo.dto.ApplyDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import org.apache.ibatis.annotations.Param;
+ 
+@@ -10,7 +11,7 @@
+ 
+     void save(BasicsApprove approve);
+ 
+-    List<BasicsApprove> ApprovePage(@Param("userName") String userName, @Param("pageNum") int pageNum, @Param("pageSize")int pageSize,@Param("status")int status,@Param("flowName") String flowName);
++    List<ApplyDto> ApprovePage(@Param("userName") String userName, @Param("pageNum") int pageNum, @Param("pageSize")int pageSize, @Param("status")int status, @Param("flowName") String flowName);
+ 
+     int getCount(BasicsApprove approve);
+ 
+Index: src/main/java/com/ssm/demo/entity/PageTask.java
+===================================================================
+--- src/main/java/com/ssm/demo/entity/PageTask.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/dto/PageTaskDto.java	(date 1543849205321)
+@@ -1,11 +1,11 @@
+-package com.ssm.demo.entity;
++package com.ssm.demo.dto;
+ 
+ import lombok.Data;
+ 
+ import java.util.List;
+ 
+ @Data
+-public class PageTask<T> {
++public class PageTaskDto<T> {
+     private int total;
+     private List<T> rows;
+ }
+Index: src/main/resources/mapper/LeaveApplyMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/mapper/LeaveApplyMapper.xml	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/resources/mapper/LeaveApplyMapper.xml	(date 1543848712980)
+@@ -22,7 +22,7 @@
+ 		select <include refid="parameters"/>from leaveapply where id=#{id}
+ 	</select>
+ 
+-	<select id="LeaveApplyPageByuserNameComplete" resultType="com.ssm.demo.entity.LeaveApply" parameterType="string">
++	<select id="LeaveApplyPageByComplete" resultType="com.ssm.demo.entity.LeaveApply" parameterType="string">
+ 		select <include refid="parameters"/> from leaveapply
+ 		where user_name=#{userName}
+ 		<if test="complete!=-1">
+Index: src/main/java/com/ssm/demo/mapper/LeaveApplyMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/mapper/LeaveApplyMapper.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/mapper/LeaveApplyMapper.java	(date 1543848702587)
+@@ -13,7 +13,7 @@
+ 
+     LeaveApply getApply(int i);
+ 
+-    List<LeaveApply> LeaveApplyPageByuserNameComplete(@Param("userName") String userName,@Param("pageNum") int pageNum,@Param("pageSize") int pageSize,@Param("complete") int complete);
++    List<LeaveApply> LeaveApplyPageByComplete(@Param("userName") String userName,@Param("pageNum") int pageNum,@Param("pageSize") int pageSize,@Param("complete") int complete);
+ 
+     int getCount(@Param("userName")String name, @Param("complete") int complete);
+ 
+Index: src/main/java/com/ssm/demo/entity/LawCaseApply.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/entity/LawCaseApply.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/entity/LawCaseApply.java	(date 1543846770057)
+@@ -5,6 +5,7 @@
+ import lombok.Data;
+ 
+ import java.io.Serializable;
++import java.util.Date;
+ import java.util.List;
+ 
+ import org.springframework.web.multipart.MultipartFile;
+@@ -34,11 +35,11 @@
+     @ApiModelProperty(value = "初始线索", name = "clue")
+     private String clue;//初始线索
+ 
+-    @ApiModelProperty(value = "开始时间", name = "startTime")
+-    private String startTime;//开始时间
++    private int taskType;//任务类型,0为任务，1为案件
+ 
+-    @ApiModelProperty(value = "结束时间", name = "endTime")
+-    private String endTime;//结束时间
++    private int dispose;//处置方式，0为布控，1为信息核查
++
++    private Date deadline;//布控类任务周期三个月,信息核查类任务周期一个月
+ 
+     @ApiModelProperty(value = "发起时间", name = "applyTime")
+     private String applyTime;//发起时间
+@@ -64,10 +65,7 @@
+     //   private String []copys;//抄送人
+ 
+     @ApiModelProperty(value = "上传文件", name = "file")
+-    private MultipartFile file;//上传文件
+-
+-    @ApiModelProperty(value = "上传图片", name = "photos")
+-    private MultipartFile[] photos;//上传图片
++    private MultipartFile [] files;//上传文件
+ 
+     @ApiModelProperty(value = "审批结果以及批注", name = "resultPostils")
+     private List<ResultPostil> rows;//审批结果以及批注
+Index: src/main/resources/mapper/BasicsApproveMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/mapper/BasicsApproveMapper.xml	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/resources/mapper/BasicsApproveMapper.xml	(date 1543850253984)
+@@ -10,12 +10,8 @@
+ 		 approve_node AS approveNode,
+ 		 node AS node,
+ 		 approver AS approver,
+-		 caption AS caption,
+-		 end_date AS endDate,
+ 		 flow_name AS flowName,
+-		 start_date AS startDate,
+-		 status AS status,
+-		 reason  AS reason
++		 status AS status
+ 	</sql>
+ 
+ 	<sql id="getApproverByStatus">
+@@ -85,13 +81,8 @@
+ 	  approve_node,
+ 	  node,
+ 	  approver,
+-	  caption,
+-	  end_date,
+ 	  flow_name,
+-	  start_date,
+-	  status,
+-	  reason,
+-	  complete)
++	  status)
+ 	  values
+ 	  (#{id},
+ 	  #{applyId},
+@@ -99,13 +90,8 @@
+ 	  #{approveNode},
+ 	  #{node},
+ 	  #{approver},
+-	  #{caption},
+-	  #{endDate},
+ 	  #{flowName},
+-	  #{startDate},
+-	  #{status},
+-	  #{reason},
+-	  #{complete})
++	  #{status})
+ 	</insert>
+ 
+ 
+@@ -117,17 +103,11 @@
+ 	<update id="updateStatusByApproveNode" parameterType="com.ssm.demo.entity.BasicsApprove">
+ 		update basicsapprove
+ 		<set>
+-			<if test="complete!=null and complete!=''">
+-				complete=#{complete},
+-			</if>
+ 			<if test="status!=null and status!=''">
+ 				status=#{status},
+ 			</if>
+ 			<if test="status==100">
+ 				status=0,
+-			</if>
+-			<if test="endDate!=null and endDate!=''">
+-				end_date=#{endDate},
+ 			</if>
+ 		</set>
+ 		where  apply_id=#{applyId} AND flow_name=#{flowName}
+Index: src/main/resources/mapper/CopyMessageMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/mapper/CopyMessageMapper.xml	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/resources/mapper/CopyMessageMapper.xml	(date 1543849438971)
+@@ -11,12 +11,8 @@
+ 		basicsapprove.approve_node AS approveNode,
+ 		basicsapprove.node AS ode,
+ 		basicsapprove.approver AS approver,
+-		basicsapprove.caption AS caption,
+-		basicsapprove.end_date AS endDate,
+ 		basicsapprove.flow_name AS flowName,
+-		basicsapprove.start_date AS startDate,
+ 		basicsapprove.status AS status,
+-		basicsapprove.reason  AS reason
+ 	</sql>
+ 
+        <!--抄送人查询要抄送的信息列表-->
+Index: src/main/java/com/ssm/demo/controller/LeaveApplyController.java
+===================================================================
+--- src/main/java/com/ssm/demo/controller/LeaveApplyController.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/controller/LeaveController.java	(date 1543849603106)
+@@ -2,11 +2,10 @@
+ 
+ 
+ import com.alibaba.fastjson.JSON;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.LeaveApply;
+ import com.ssm.demo.service.LeaveService;
+-import com.ssm.demo.util.DateTimeUtil;
+ import io.swagger.annotations.Api;
+ import io.swagger.annotations.ApiOperation;
+ import org.slf4j.Logger;
+@@ -14,7 +13,8 @@
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Controller;
+ import org.springframework.web.bind.annotation.*;
+-import java.util.Date;
++
++import javax.servlet.http.HttpSession;
+ import java.util.List;
+ 
+ /**
+@@ -23,23 +23,22 @@
+ @Controller
+ @RequestMapping("/leave")
+ @Api(tags={"请假接口"})
+-public class LeaveApplyController {
++public class LeaveController {
+     private Logger logger = LoggerFactory.getLogger(getClass());
+ 
+     @Autowired
+     private LeaveService leaveService;
+ 
++
+     /*
+      *用户开始请假
+      * @param apply 用户请假的参数对象
+-     * @param session  从session中取出用户名
+      * @return
+      */
+     @ApiOperation(value = "请假申请")
+     @RequestMapping(value = "/startLeave", method = RequestMethod.POST)
+     @ResponseBody
+-    public String start_leave(LeaveApply apply,String []approvers,String []copys) {
+-
++    public String start_leave(LeaveApply apply, String []approvers, String []copys) {
+         boolean b=leaveService.startWorkflow(apply,approvers,copys);
+         if (b) {
+             return JSON.toJSONString("sucess");
+@@ -50,7 +49,7 @@
+ 
+ 
+     /**
+-     * 查询自己申请记录
++     * 申请查询
+      * @param pageNum
+      * @param pageSize
+      * @param userName
+@@ -59,8 +58,9 @@
+      */
+     @RequestMapping(value = "/applyPage", method = RequestMethod.GET)
+     @ResponseBody
+-    public String  apply(int pageNum,int pageSize,String userName,int complete){
+-        PageTask<LeaveApply> leaveApplyPage = leaveService.applyPage(userName, pageNum, pageSize,complete);
++    public String  apply(int pageNum,int pageSize,String userName,int complete, HttpSession session){
++        String name = (String) session.getAttribute("userName");
++        PageTaskDto<LeaveApply> leaveApplyPage = leaveService.applyPage(userName, pageNum, pageSize,complete);
+         List<LeaveApply> applyList = leaveApplyPage.getRows();
+         applyList.forEach(apply->
+                         System.out.println(apply)
+@@ -74,7 +74,7 @@
+ 
+ 
+     /**
+-     * 查询关于审批的请假申请
++     * 审批查询
+      * @param pageNum
+      * @param pageSize
+      * @param status -1之前人在审批，0准备审批，1已审批，2有人不同意申请
+@@ -83,7 +83,7 @@
+     @RequestMapping(value = "/approvePage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  approvePage(int pageNum,int pageSize,String userName,int status){
+-        PageTask<BasicsApprove> leaveApplyPage = leaveService.approvePage(userName, pageNum, pageSize,status);
++        PageTaskDto<BasicsApprove> leaveApplyPage = leaveService.approvePage(userName, pageNum, pageSize,status);
+         List<BasicsApprove> applyList = leaveApplyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+@@ -120,7 +120,7 @@
+     @RequestMapping(value = "/adjustApply", method = RequestMethod.POST, produces = {"application/json;charset=UTF-8"})
+     @ResponseBody
+     public String adjustApply(LeaveApply approve,int reapply){
+-            leaveService.adjustApply(approve,reapply);
++        leaveService.adjustApply(approve,reapply);
+             return JSON.toJSONString("sucess");
+ 
+     }
+Index: src/main/java/com/ssm/demo/controller/LawCaseController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/controller/LawCaseController.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/controller/LawCaseController.java	(date 1543849205238)
+@@ -2,16 +2,13 @@
+ 
+ 
+ import com.alibaba.fastjson.JSON;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.LawCaseApply;
+ import com.ssm.demo.service.LawCaseService;
+-import io.swagger.annotations.Api;
+-import io.swagger.annotations.ApiOperation;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+-import org.springframework.data.domain.Page;
+ import org.springframework.stereotype.Controller;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.RequestMapping;
+@@ -21,7 +18,6 @@
+ 
+ @Controller
+ @RequestMapping("lawCase")
+-@Api(tags={"案件接口"})
+ public class LawCaseController {
+ 
+     private Logger logger = LoggerFactory.getLogger(getClass());
+@@ -38,7 +34,6 @@
+      * @return
+      */
+ 
+-    @ApiOperation(value = "案件申请")
+     @RequestMapping(value = "/startPolice", method = RequestMethod.POST)
+     @ResponseBody
+     public String startPolice(LawCaseApply apply,String []approvers,String []copys) {
+@@ -73,7 +68,7 @@
+     @RequestMapping(value = "/applyPage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  apply(int pageNum,int pageSize,String userName,int complete){
+-        PageTask<LawCaseApply> lawCaseApplyPage = lawCaseService.applyPage(userName, pageNum, pageSize,complete);
++        PageTaskDto<LawCaseApply> lawCaseApplyPage = lawCaseService.applyPage(userName, pageNum, pageSize,complete);
+         List<LawCaseApply> applyList = lawCaseApplyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+@@ -99,7 +94,7 @@
+     @RequestMapping(value = "/approvePage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  approvePage(String userName, int pageNum, int pageSize,int status){
+-        PageTask<BasicsApprove> applyPage = lawCaseService.approvePage(userName, pageNum, pageSize,status);
++        PageTaskDto<BasicsApprove> applyPage = lawCaseService.approvePage(userName, pageNum, pageSize,status);
+         List<BasicsApprove> applyList = applyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+Index: src/main/java/com/ssm/demo/controller/BasicsController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/controller/BasicsController.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/controller/BasicsController.java	(date 1543850464306)
+@@ -2,7 +2,7 @@
+ 
+ 
+ import com.alibaba.fastjson.JSON;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.service.BasicsApproveService;
+ import com.ssm.demo.util.FileUploading;
+@@ -72,7 +72,7 @@
+     @RequestMapping(value = "/applypage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  apply(int pageNum,int pageSize,String flowName,String userName,int complete){
+-        PageTask lawCaseApplyPage = basicsApproveService.applyPage(userName,flowName, pageNum, pageSize,complete);
++        PageTaskDto lawCaseApplyPage = basicsApproveService.applyPage(userName,flowName, pageNum, pageSize,complete);
+         List  applyList = lawCaseApplyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+@@ -93,8 +93,8 @@
+     @RequestMapping(value = "/approvePage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  approvePage(String userName, String flowName,int pageNum, int pageSize, int status){
+-        PageTask pageTask = basicsApproveService.approvePage(userName, flowName,pageNum, pageSize,status);
+-        List applyList = pageTask.getRows();
++        PageTaskDto pageTaskDto = basicsApproveService.approvePage(userName, flowName,pageNum, pageSize,status);
++        List applyList = pageTaskDto.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+         );
+Index: src/main/java/com/ssm/demo/entity/BasicsApprove.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/entity/BasicsApprove.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/entity/BasicsApprove.java	(date 1543847136933)
+@@ -23,11 +23,7 @@
+    private String flowName;//是属于哪个流程
+    private int approveNode;//要审批的节点
+    private int node;//有几次审批
+-   private String   startDate;//发起时间
+-   private String   endDate;//结束时间
+-   private String caption;//审批标题
+-   private String reason;//请求理由
+-   private int complete;//0没完成,1已完成,2要修改,3失败
++
+    private int    status;//状态，-1之前人在审批，0准备审批，1已审批，2有人不同意申请,3申请失败
+    private String approver;//审批人
+    private int approvalResult;//审批结果，0为同意，1为不同意
+Index: src/main/java/com/ssm/demo/service/impl/LeaveApplyServiceImpl.java
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/LeaveApplyServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/LeaveServicempl.java	(date 1543849205204)
+@@ -1,6 +1,6 @@
+ package com.ssm.demo.service.impl;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.LeaveApply;
+ import com.ssm.demo.entity.ResultPostil;
+@@ -9,7 +9,6 @@
+ import com.ssm.demo.service.BasicsApproveService;
+ import com.ssm.demo.service.ResultPostilService;
+ import com.ssm.demo.service.LeaveService;
+-import com.ssm.demo.util.DateTimeUtil;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -22,7 +21,7 @@
+ 
+ /*@Transactional*/
+ @Service
+-public class LeaveApplyServiceImpl implements LeaveService {
++public class LeaveServicempl implements LeaveService {
+ 
+     private Logger logger = LoggerFactory.getLogger(getClass());
+ 
+@@ -59,9 +58,6 @@
+             approve.setApplyId(apply.getId());
+             approve.setApplyName(apply.getUserName());
+             approve.setFlowName("请假");
+-            approve.setStartDate(DateTimeUtil.dateToString(new Date(),"yyyy-MM-dd HH:mm:ss"));
+-            approve.setCaption("请假");
+-            approve.setReason(apply.getReason());
+             boolean b = basicsApproveService.saveBasicsApprove(approve, approvers,copys);
+             return  b;
+         }
+@@ -77,17 +73,15 @@
+      * @return
+      */
+     @Override
+-    public PageTask<LeaveApply> applyPage(String name, int pageNum, int pageSize,int complete) {
+-        if (pageNum!=0){
+-            pageNum=(pageNum-1);
+-        }
+-       List<LeaveApply> leaveApplyList=leaveApplyMapper.LeaveApplyPageByuserNameComplete(name,pageNum,pageSize,complete);
++    public PageTaskDto<LeaveApply> applyPage(String name, int pageNum, int pageSize, int complete) {
++        pageNum=pageNum==0?pageNum=1:(pageNum-1);
++       List<LeaveApply> leaveApplyList=leaveApplyMapper.LeaveApplyPageByComplete(name,pageNum,pageSize,complete);
+        int count=leaveApplyMapper.getCount(name,complete);
+-       PageTask<LeaveApply> pageTask=new PageTask<>();
+-       pageTask.setTotal(count);
+-       pageTask.setRows(leaveApplyList);
++       PageTaskDto<LeaveApply> pageTaskDto =new PageTaskDto<>();
++       pageTaskDto.setTotal(count);
++       pageTaskDto.setRows(leaveApplyList);
+         System.out.println(leaveApplyList);
+-     return  pageTask;
++     return pageTaskDto;
+     }
+ 
+ 
+@@ -99,7 +93,7 @@
+      * @return
+      */
+     @Override
+-    public PageTask<BasicsApprove> approvePage(String name, int pageNum, int pageSize,int status) {
++    public PageTaskDto<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status) {
+         return  basicsApproveService.approvePage(name,"请假",pageNum,pageSize,status);
+ 
+     }
+Index: src/main/java/com/ssm/demo/service/impl/ElectronicApplyServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/ElectronicApplyServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/ElectronicApplyServiceImpl.java	(date 1543849205307)
+@@ -1,6 +1,6 @@
+ package com.ssm.demo.service.impl;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.ElectronicApply;
+ import com.ssm.demo.mapper.ElectronicApplyMapper;
+@@ -65,11 +65,7 @@
+             approve.setApplyId(apply.getId());
+             approve.setApplyName(apply.getUserName());
+             approve.setFlowName("电子委托");
+-            approve.setStartDate(DateTimeUtil.dateToString(new Date(),"yyyy-MM-dd HH:mm:ss"));
+-            approve.setCaption(apply.getCaseName());
+-            approve.setReason(apply.getReason());
+             approve.setStatus(0);
+-
+             return  basicsApproveService.saveBasicsApprove(approve, approvers,copys);
+         }
+         return  false;
+@@ -86,16 +82,16 @@
+      * @return
+      */
+     @Override
+-    public PageTask<ElectronicApply> applyPage(String userName, int pageNum, int pageSize, int complete) {
++    public PageTaskDto<ElectronicApply> applyPage(String userName, int pageNum, int pageSize, int complete) {
+         if (pageNum!=0){
+             pageNum=(pageNum-1);
+         }
+-        PageTask<ElectronicApply> pageTask=new PageTask<>();
++        PageTaskDto<ElectronicApply> pageTaskDto =new PageTaskDto<>();
+         List<ElectronicApply> electronicApplies=electronicApplyMapper.ElectronicApplyPageByNameAndComplete(userName,pageNum,pageSize,complete);
+         int count=electronicApplyMapper.getCount(userName,complete);
+-        pageTask.setTotal(count);
+-        pageTask.setRows(electronicApplies);
+-        return  pageTask;
++        pageTaskDto.setTotal(count);
++        pageTaskDto.setRows(electronicApplies);
++        return pageTaskDto;
+     }
+ 
+ 
+@@ -107,7 +103,7 @@
+      * @return
+      */
+     @Override
+-    public PageTask<BasicsApprove> approvePage(String name, int pageNum, int pageSize,int status) {
++    public PageTaskDto<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status) {
+         return  basicsApproveService.approvePage(name,"电子委托",pageNum,pageSize,status);
+ 
+     }
+@@ -186,8 +182,6 @@
+                 approve.setApplyId(apply.getId());
+                 approve.setApplyName(apply.getUserName());
+                 approve.setFlowName("电子委托");
+-                approve.setCaption(apply.getCaseName());
+-                approve.setReason(apply.getReason());
+                 approve.setStatus(0);
+                 approve.setApproveNode(-1);
+                 approve.setStatus(-1);
+Index: src/main/java/com/ssm/demo/controller/CopyMessageController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/controller/CopyMessageController.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/controller/CopyMessageController.java	(date 1543849205222)
+@@ -2,7 +2,7 @@
+ 
+ 
+ import com.alibaba.fastjson.JSON;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.service.CopyMessageService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Controller;
+@@ -25,8 +25,8 @@
+     @RequestMapping("/copyPersonPage")
+     @ResponseBody
+     public String copyPersonPage(int complete,String copyName,String flowName,int pageNum,int pageSize){
+-       PageTask pageTask=copyMessageService.copyPersonPage(complete,copyName,flowName,pageNum,pageSize);
+-        return JSON.toJSONString(pageTask);
++       PageTaskDto pageTaskDto =copyMessageService.copyPersonPage(complete,copyName,flowName,pageNum,pageSize);
++        return JSON.toJSONString(pageTaskDto);
+     }
+ 
+ 
+Index: src/main/java/com/ssm/demo/controller/ElectronicApplyController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/controller/ElectronicApplyController.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/controller/ElectronicApplyController.java	(date 1543849205290)
+@@ -2,7 +2,7 @@
+ 
+ 
+ import com.alibaba.fastjson.JSON;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.ElectronicApply;
+ import com.ssm.demo.service.ElectronicApplyService;
+@@ -58,7 +58,7 @@
+     @RequestMapping(value = "/applyPage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  apply(int pageNum,int pageSize,String userName,int complete){
+-        PageTask<ElectronicApply> lawCaseApplyPage = electronicApplyService.applyPage(userName, pageNum, pageSize,complete);
++        PageTaskDto<ElectronicApply> lawCaseApplyPage = electronicApplyService.applyPage(userName, pageNum, pageSize,complete);
+         List<ElectronicApply> applyList = lawCaseApplyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+@@ -81,7 +81,7 @@
+     @RequestMapping(value = "/approvePage", method = RequestMethod.GET)
+     @ResponseBody
+     public String  approvePage(String userName, int pageNum, int pageSize, int status){
+-        PageTask<BasicsApprove> applyPage = electronicApplyService.approvePage(userName, pageNum, pageSize,status);
++        PageTaskDto<BasicsApprove> applyPage = electronicApplyService.approvePage(userName, pageNum, pageSize,status);
+         List<BasicsApprove> applyList = applyPage.getRows();
+         applyList.forEach(apply->
+                 System.out.println(apply)
+Index: src/main/java/com/ssm/demo/service/impl/LawCaseApplyServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/LawCaseApplyServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/LawCaseApplyServiceImpl.java	(date 1543849204611)
+@@ -3,7 +3,7 @@
+ 
+ import java.util.Date;
+ import java.util.List;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.*;
+ import com.ssm.demo.mapper.LawCaseApplyMapper;
+ import com.ssm.demo.service.BasicsApproveService;
+@@ -64,9 +64,6 @@
+             approve.setApplyId(apply.getId());
+             approve.setApplyName(apply.getUserName());
+             approve.setFlowName("案件");
+-            approve.setStartDate(DateTimeUtil.dateToString(new Date(),formatStr));
+-            approve.setCaption(apply.getCaseName());
+-            approve.setReason(apply.getReason());
+             approve.setStatus(0);
+             return   basicsApproveService.saveBasicsApprove(approve, approvers,copys);
+         }
+@@ -84,15 +81,15 @@
+      * @return
+      */
+     @Override
+-    public PageTask<LawCaseApply> applyPage(String name, int pageNum, int pageSize, int complete) {
++    public PageTaskDto<LawCaseApply> applyPage(String name, int pageNum, int pageSize, int complete) {
+         pageNum=pageNum!=0?pageNum-1:0;
+         List<LawCaseApply> LawCaseApplyList=lawCaseApplyMapper.LawCaseApplyPageByNameAndComplete(name,pageNum,pageSize,complete);
+         int count=lawCaseApplyMapper.getCount(name,complete);
+-        PageTask<LawCaseApply> pageTask=new PageTask<>();
+-        pageTask.setTotal(count);
+-        pageTask.setRows(LawCaseApplyList);
++        PageTaskDto<LawCaseApply> pageTaskDto =new PageTaskDto<>();
++        pageTaskDto.setTotal(count);
++        pageTaskDto.setRows(LawCaseApplyList);
+         logger.info("查询自己申请案件的全部数据为-->"+LawCaseApplyList);
+-        return  pageTask;
++        return pageTaskDto;
+     }
+ 
+     /**
+@@ -119,7 +116,7 @@
+      * @return
+      */
+     @Override
+-    public PageTask<BasicsApprove> approvePage(String name, int pageNum, int pageSize,int status) {
++    public PageTaskDto<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status) {
+         return  basicsApproveService.approvePage(name,"案件",pageNum,pageSize,status);
+ 
+     }
+@@ -190,7 +187,6 @@
+             lawCaseApplyMapper.updateApply(apply);
+             //案件调整
+             approve.setStatus(3);
+-            approve.setComplete(3);
+             basicsApproveService.adjustApprove(approve);
+             logger.info("案件申请销毁");
+         }
+Index: src/main/java/com/ssm/demo/service/impl/CopyMessageServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/CopyMessageServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/CopyMessageServiceImpl.java	(date 1543849205255)
+@@ -1,7 +1,7 @@
+ package com.ssm.demo.service.impl;
+ 
+ import com.ssm.demo.entity.BasicsApprove;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.CopyMessage;
+ import com.ssm.demo.mapper.CopyMessageMapper;
+ import com.ssm.demo.service.BasicsApproveService;
+@@ -43,7 +43,7 @@
+      * @return
+      */
+     @Override
+-    public PageTask copyPersonPage(int complete,String copyName,String flowName,int pageNum,int pageSize) {
++    public PageTaskDto copyPersonPage(int complete, String copyName, String flowName, int pageNum, int pageSize) {
+         Map map=new HashMap();
+         map.put("complete",complete);
+         map.put("copyName",copyName);
+@@ -52,10 +52,10 @@
+         map.put("pageSize",pageSize);
+        List<CopyMessage> copyMessages=copyMessageMapper.copyMessagePageByCopyName(map);
+        int count=copyMessageMapper.getCount(map);
+-       PageTask pageTask=new PageTask();
+-       pageTask.setRows(copyMessages);
+-       pageTask.setTotal(count);
+-       return pageTask;
++       PageTaskDto pageTaskDto =new PageTaskDto();
++       pageTaskDto.setRows(copyMessages);
++       pageTaskDto.setTotal(count);
++       return pageTaskDto;
+     }
+ 
+ 
+Index: src/main/java/com/ssm/demo/service/impl/BasicsApproveServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/BasicsApproveServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/BasicsApproveServiceImpl.java	(date 1543850253963)
+@@ -1,17 +1,16 @@
+ package com.ssm.demo.service.impl;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.ApplyDto;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.mapper.BasicsApproveMapper;
+ import com.ssm.demo.service.*;
+-import com.ssm.demo.util.DateTimeUtil;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import java.util.Date;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+@@ -68,7 +67,7 @@
+         approve.setNode(approvers.length);
+         approve.setApproveNode(node);
+         approve.setApprover(approvers[0]);
+-        approve.setComplete(0);
++        approve.setStatus(0);
+         basicsApproveMapper.save(approve);
+         for (String str : approvers) {
+             if (!str.equals(approvers[0])){
+@@ -135,8 +134,6 @@
+                 return 0;
+             }else {
+                 approve.setApproveNode(-1);
+-                approve.setComplete(1);
+-                approve.setEndDate(DateTimeUtil.dateToString(new Date(),"yyyy-MM-dd HH:mm:ss"));
+                 basicsApproveMapper.updateStatusByApproveNode(newBasicsApprove);
+                 return 1;
+              }
+@@ -144,7 +141,6 @@
+             //修改全部状态为2，为领导不通过
+             approve.setStatus(2);
+             approve.setApproveNode(-1);
+-            approve.setComplete(2);
+            basicsApproveMapper.updateStatusByApproveNode(newBasicsApprove);
+             return  2;
+         }
+@@ -164,7 +160,6 @@
+         if (flowName.equals("全部")){
+         approve.setFlowName(null);
+         }
+-        approve.setComplete(complete);
+         return   basicsApproveMapper.getApplyCount(approve);
+     }
+ 
+@@ -179,21 +174,20 @@
+      * @return
+      */
+     @Override
+-    public PageTask  applyPage(String applyName, String flowName, int pageNum, int pageSize, int complete) {
+-        PageTask pageTask=new PageTask();
++    public PageTaskDto applyPage(String applyName, String flowName, int pageNum, int pageSize, int complete) {
++        PageTaskDto pageTaskDto =new PageTaskDto();
+         List<BasicsApprove> approves=null;
+         int total=0;
+         pageNum=pageNum!=0?pageNum-1:0;
+         flowName=flowName.equals("全部")?null:flowName;
+         approves=basicsApproveMapper.ApplyList(applyName,flowName,complete,pageNum,pageSize);
+         BasicsApprove approve=new BasicsApprove();
+-        approve.setComplete(complete);
+         approve.setApplyName(applyName);
+         approve.setFlowName(flowName);
+         total=basicsApproveMapper.getApplyCount(approve);
+-        pageTask.setTotal(total);
+-        pageTask.setRows(approves);
+-            return  pageTask;
++        pageTaskDto.setTotal(total);
++        pageTaskDto.setRows(approves);
++            return pageTaskDto;
+     }
+ 
+     /**
+@@ -206,15 +200,15 @@
+      * @return
+      */
+     @Override
+-    public PageTask approvePage(String name,String flowName, int pageNum, int pageSize, int status) {
++    public PageTaskDto approvePage(String name, String flowName, int pageNum, int pageSize, int status) {
+         BasicsApprove approve=new BasicsApprove();
+         approve.setApprover(name);
+         approve.setStatus(status);
+         approve.setFlowName(flowName);
+-        PageTask pageTask=new PageTask();
++        PageTaskDto pageTaskDto =new PageTaskDto();
+         int count=0;
+         pageNum=pageNum!=0?pageNum-1:0;
+-        List<BasicsApprove> approves;
++        List<ApplyDto> approves;
+         if (flowName.equals("全部")){
+             approves = basicsApproveMapper.ApprovePage(name,pageNum, pageSize, status, null);
+             count = basicsApproveMapper.getCount(approve);
+@@ -222,11 +216,11 @@
+             approves=basicsApproveMapper.ApprovePage(name,pageNum,pageSize,status,flowName);
+             count=basicsApproveMapper.getCount(approve);
+         }
+-        pageTask.setTotal(count);
+-        pageTask.setRows(approves);
++        pageTaskDto.setTotal(count);
++        pageTaskDto.setRows(approves);
+         System.out.println(approves);
+ 
+-        return  pageTask;
++        return pageTaskDto;
+     }
+ 
+     /**
+Index: src/main/java/com/ssm/demo/service/impl/ResultPostilServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/impl/ResultPostilServiceImpl.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/impl/ResultPostilServiceImpl.java	(date 1543847134199)
+@@ -31,8 +31,6 @@
+         resultPostil.setApplyId(approve.getApplyId());
+         resultPostil.setApprovalName(approve.getApprover());
+         resultPostil.setFlowName(flowName);
+-        resultPostil.setPostil(approve.getPostil());
+-        resultPostil.setApprovalResult(approve.getApprovalResult());
+         resultPostil.setDateTime(DateTimeUtil.dateToString(new Date(),"yyyy-MM-dd HH:mm:ss"));
+         resultPostilMapper.save(resultPostil);
+         if (resultPostil.getId()>0){
+Index: src/main/java/com/ssm/demo/service/LeaveService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/LeaveService.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/LeaveService.java	(date 1543849205067)
+@@ -1,6 +1,6 @@
+ package com.ssm.demo.service;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.LeaveApply;
+ import com.ssm.demo.entity.ResultPostil;
+@@ -10,9 +10,9 @@
+ public interface LeaveService {
+     boolean startWorkflow(LeaveApply apply,String []approvers,String []copys);
+ 
+-    PageTask<LeaveApply> applyPage(String name,int pageNum,int pageSize,int complete);
++    PageTaskDto<LeaveApply> applyPage(String name, int pageNum, int pageSize, int complete);
+ 
+-    PageTask<BasicsApprove> approvePage(String name, int pageNum, int pageSize,int status);
++    PageTaskDto<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status);
+ 
+ 
+     boolean signApprove(BasicsApprove approve);
+Index: src/main/java/com/ssm/demo/service/ElectronicApplyService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/ElectronicApplyService.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/ElectronicApplyService.java	(date 1543849205031)
+@@ -1,15 +1,15 @@
+ package com.ssm.demo.service;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.ElectronicApply;
+ 
+ public interface ElectronicApplyService {
+     boolean startElectronic(ElectronicApply apply,String []approvers,String []copys);
+ 
+-    PageTask<ElectronicApply> applyPage(String userName, int pageNum, int pageSize, int complete);
++    PageTaskDto<ElectronicApply> applyPage(String userName, int pageNum, int pageSize, int complete);
+ 
+-    PageTask<BasicsApprove> approvePage(String userName, int pageNum, int pageSize, int status);
++    PageTaskDto<BasicsApprove> approvePage(String userName, int pageNum, int pageSize, int status);
+ 
+     ElectronicApply detailApply(int id);
+ 
+Index: src/main/java/com/ssm/demo/service/BasicsApproveService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/BasicsApproveService.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/BasicsApproveService.java	(date 1543849205273)
+@@ -1,6 +1,6 @@
+ package com.ssm.demo.service;
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ 
+ 
+@@ -16,9 +16,9 @@
+ 
+     int ApprlyCountAll(String name,String flowName, int complete);
+ 
+-    PageTask  applyPage(String name, String flowName, int pageNum, int pageSize, int complete);
++    PageTaskDto applyPage(String name, String flowName, int pageNum, int pageSize, int complete);
+ 
+-    PageTask approvePage(String name,String flowName, int pageNum, int pageSize, int status);
++    PageTaskDto approvePage(String name, String flowName, int pageNum, int pageSize, int status);
+ 
+     boolean distributeApprove(BasicsApprove approve);
+ 
+Index: src/main/java/com/ssm/demo/util/FileUploading.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/util/FileUploading.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/util/FileUploading.java	(date 1543846929195)
+@@ -27,58 +27,42 @@
+      * 文件上传
+      * @param apply
+      */
+-    public  void getPath(LawCaseApply apply)  {
++    public  void getPath(LawCaseApply apply) {
+         File newFile = null;
+         String middle = null;
+         Date date = new Date();
+-        File file=null;
++        File file = null;
+ 
+         try {
+-            if (apply.getFile() != null) {
+-                middle =filePath+ date.getTime() + apply.getUserName();
+-                file=new File(middle);
+-                if (!file.exists()){
++            if (apply.getFiles() != null) {
++                middle = filePath + date.getTime() + apply.getUserName();
++                file = new File(middle);
++                if (!file.exists()) {
+                     logger.info("没有文件夹开始创建");
+                     file.mkdirs();
+                 }
+-                if (null != apply.getFile().getOriginalFilename()
+-                        && apply.getFile().getOriginalFilename() != "") {
+-                    newFile = new File(middle+ File.separator +apply.getFile().getOriginalFilename());
+-                    Files.write(apply.getFile().getBytes(), newFile);
+-
+-                    apply.setFilePath(date.getTime() + apply.getUserName()+File.separator+apply.getFile().getOriginalFilename());
+-                }
+-
+-            }
+-            if (apply.getPhotos() != null) {
+-                date=new Date();
+-                middle =filePath+ date.getTime() + apply.getUserName();
+-                file=new File(middle);
+-                if (!file.exists()){
+-                    logger.info("没有文件夹开始创建");
+-                    file.mkdirs();
+-                }
+-                if (apply.getPhotos().length != 0) {
+-                    MultipartFile[] photos = apply.getPhotos();
+-                    for (int i = 0; i < photos.length; i++) {
+-                        newFile = new File(middle + File.separator+photos[i].getOriginalFilename());
+-                        Files.write(photos[i].getBytes(), newFile);
++                if (apply.getFiles().length != 0) {
++                    MultipartFile[] files = apply.getFiles();
++                    for (int i = 0; i < files.length; i++) {
++                        newFile = new File(middle + File.separator + files[i].getOriginalFilename());
++                        Files.write(files[i].getBytes(), newFile);
+                     }
+ 
+                     //压缩成zip
+-                    String path = (filePath+new Date().getTime()+ apply.getUserName()+File.separator );
+-                    file=new File(path);
+-                    if (!file.exists()){
++                    String path = (filePath + new Date().getTime() + apply.getUserName() + File.separator);
++                    file = new File(path);
++                    if (!file.exists()) {
+                         logger.info("没有文件夹开始创建");
+                         file.mkdirs();
+                     }
+-                    ZipUtil.zip2(middle,path+apply.getCaseName()+".zip");
+-                    apply.setPhotosPath(date.getTime() + apply.getUserName()+File.separator+ date + ".zip");
++                    ZipUtil.zip2(middle, path + apply.getCaseName() + ".zip");
++                    apply.setPhotosPath(date.getTime() + apply.getUserName() + File.separator + date + ".zip");
+                 }
+             }
+-        }catch (Exception e){
++        } catch (Exception e) {
+             logger.info("文件上传出错");
+             e.printStackTrace();
++
+         }
+     }
+ 
+Index: src/main/java/com/ssm/demo/mapper/LawCaseApplyMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/mapper/LawCaseApplyMapper.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/mapper/LawCaseApplyMapper.java	(date 1543849204576)
+@@ -1,11 +1,9 @@
+ package com.ssm.demo.mapper;
+ 
+ import com.ssm.demo.entity.LawCaseApply;
+-import com.ssm.demo.entity.PageTask;
+ import org.apache.ibatis.annotations.Param;
+ 
+ import java.util.List;
+-import java.util.Map;
+ 
+ public interface LawCaseApplyMapper {
+ 
+Index: src/main/java/com/ssm/demo/service/LawCaseService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/LawCaseService.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/LawCaseService.java	(date 1543849204924)
+@@ -1,7 +1,7 @@
+ package com.ssm.demo.service;
+ 
+ 
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ import com.ssm.demo.entity.BasicsApprove;
+ import com.ssm.demo.entity.LawCaseApply;
+ 
+@@ -9,7 +9,7 @@
+     boolean startWorkflow(LawCaseApply apply,String []approvers,String []copys);
+ 
+ 
+-    PageTask<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status);
++    PageTaskDto<BasicsApprove> approvePage(String name, int pageNum, int pageSize, int status);
+ 
+     boolean signApprove(BasicsApprove approve);
+ 
+@@ -18,7 +18,7 @@
+ 
+     LawCaseApply detailApply(int id);
+ 
+-    PageTask<LawCaseApply> applyPage(String name, int pageNum, int pageSize, int complete);
++    PageTaskDto<LawCaseApply> applyPage(String name, int pageNum, int pageSize, int complete);
+ 
+     void adjustApplyById(int id);
+ 
+Index: src/main/java/com/ssm/demo/service/CopyMessageService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/service/CopyMessageService.java	(revision a117495a396be0107efae5b2a65ec9c07a34f1d7)
++++ src/main/java/com/ssm/demo/service/CopyMessageService.java	(date 1543849204536)
+@@ -2,11 +2,11 @@
+ 
+ 
+ import com.ssm.demo.entity.BasicsApprove;
+-import com.ssm.demo.entity.PageTask;
++import com.ssm.demo.dto.PageTaskDto;
+ 
+ public interface CopyMessageService {
+ 
+-    PageTask copyPersonPage(int complete,String copyName,String flowName,int pageNum,int pageSize);
++    PageTaskDto copyPersonPage(int complete, String copyName, String flowName, int pageNum, int pageSize);
+ 
+     Object detailApply(String flowName, int applyid);
+ 
+Index: src/main/java/com/ssm/demo/dto/ApplyDto.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/ssm/demo/dto/ApplyDto.java	(date 1543850443441)
++++ src/main/java/com/ssm/demo/dto/ApplyDto.java	(date 1543850443441)
+@@ -0,0 +1,43 @@
++package com.ssm.demo.dto;
++
++import lombok.Data;
++
++@Data
++public class ApplyDto {
++
++    private int id;
++
++    private String userName;//申请人姓名
++
++    private String startTime;//开始时间
++
++    private String endTime;//结束时间
++
++    private int approveNode;//要审批的节点
++
++    private int node;//有几次审批
++
++    private String realityStartTime;//实际开始时间
++
++    private String realityEndTime;//实际结束时间
++
++    private String applyTime;//申请时间
++
++    private String completeTime;//完成时间
++
++    private int duration;//时长
++
++    private String leaveType;//请假类型
++
++    private String reason;//请假理由
++
++    private int complete;//0没完成,1已完成,2要修改,3失败
++    private String applyName;//发起人
++    private int  applyId;//流程的id
++    private String flowName;//是属于哪个流程
++    private int    status;//状态，-1之前人在审批，0准备审批，1已审批，2有人不同意申请,3申请失败
++    private String approver;//审批人
++    private int approvalResult;//审批结果，0为同意，1为不同意
++    private String postil;//审批批注
++
++}

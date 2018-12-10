@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ssm.demo.mapper.TaskCaseManageMapper" >
+  <resultMap id="BaseResultMap" type="com.ssm.demo.entity.TaskCaseManage" >
+    <id column="ID" property="id" jdbcType="INTEGER" />
+    <result column="TASK_NAME" property="taskName" jdbcType="VARCHAR" />
+    <result column="TASK_THEME" property="taskTheme" jdbcType="VARCHAR" />
+    <result column="TASK_TYPE" property="taskType" jdbcType="VARCHAR" />
+    <result column="DISPOSAL_METHOD" property="disposalMethod" jdbcType="VARCHAR" />
+    <result column="TASK_STATUS" property="taskStatus" jdbcType="VARCHAR" />
+    <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+    <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+    <result column="UPDATE_TIME" property="updateTime" jdbcType="VARCHAR" />
+    <result column="ESTIMATED_TIME" property="estimatedTime" jdbcType="VARCHAR" />
+    <result column="PERSON" property="person" jdbcType="VARCHAR" />
+    <result column="BACK1" property="back1" jdbcType="VARCHAR" />
+    <result column="BACK2" property="back2" jdbcType="VARCHAR" />
+    <result column="BACK3" property="back3" jdbcType="VARCHAR" />
+    <result column="BACK4" property="back4" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, TASK_NAME, TASK_THEME, TASK_TYPE, DISPOSAL_METHOD, TASK_STATUS, START_TIME, END_TIME, 
+    UPDATE_TIME, ESTIMATED_TIME, PERSON, BACK1, BACK2, BACK3, BACK4
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from TASK_CASE_MANAGE
+    where ID = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from TASK_CASE_MANAGE
+    where ID = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.ssm.demo.entity.TaskCaseManage" >
+    insert into TASK_CASE_MANAGE (ID, TASK_NAME, TASK_THEME, 
+      TASK_TYPE, DISPOSAL_METHOD, TASK_STATUS, 
+      START_TIME, END_TIME, UPDATE_TIME, 
+      ESTIMATED_TIME, PERSON, BACK1, 
+      BACK2, BACK3, BACK4
+      )
+    values (#{id,jdbcType=INTEGER}, #{taskName,jdbcType=VARCHAR}, #{taskTheme,jdbcType=VARCHAR}, 
+      #{taskType,jdbcType=VARCHAR}, #{disposalMethod,jdbcType=VARCHAR}, #{taskStatus,jdbcType=VARCHAR}, 
+      #{startTime,jdbcType=VARCHAR}, #{endTime,jdbcType=VARCHAR}, #{updateTime,jdbcType=VARCHAR}, 
+      #{estimatedTime,jdbcType=VARCHAR}, #{person,jdbcType=VARCHAR}, #{back1,jdbcType=VARCHAR}, 
+      #{back2,jdbcType=VARCHAR}, #{back3,jdbcType=VARCHAR}, #{back4,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.ssm.demo.entity.TaskCaseManage" >
+    insert into TASK_CASE_MANAGE
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="taskName != null" >
+        TASK_NAME,
+      </if>
+      <if test="taskTheme != null" >
+        TASK_THEME,
+      </if>
+      <if test="taskType != null" >
+        TASK_TYPE,
+      </if>
+      <if test="disposalMethod != null" >
+        DISPOSAL_METHOD,
+      </if>
+      <if test="taskStatus != null" >
+        TASK_STATUS,
+      </if>
+      <if test="startTime != null" >
+        START_TIME,
+      </if>
+      <if test="endTime != null" >
+        END_TIME,
+      </if>
+      <if test="updateTime != null" >
+        UPDATE_TIME,
+      </if>
+      <if test="estimatedTime != null" >
+        ESTIMATED_TIME,
+      </if>
+      <if test="person != null" >
+        PERSON,
+      </if>
+      <if test="back1 != null" >
+        BACK1,
+      </if>
+      <if test="back2 != null" >
+        BACK2,
+      </if>
+      <if test="back3 != null" >
+        BACK3,
+      </if>
+      <if test="back4 != null" >
+        BACK4,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="taskName != null" >
+        #{taskName,jdbcType=VARCHAR},
+      </if>
+      <if test="taskTheme != null" >
+        #{taskTheme,jdbcType=VARCHAR},
+      </if>
+      <if test="taskType != null" >
+        #{taskType,jdbcType=VARCHAR},
+      </if>
+      <if test="disposalMethod != null" >
+        #{disposalMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="taskStatus != null" >
+        #{taskStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        #{startTime,jdbcType=VARCHAR},
+      </if>
+      <if test="endTime != null" >
+        #{endTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="estimatedTime != null" >
+        #{estimatedTime,jdbcType=VARCHAR},
+      </if>
+      <if test="person != null" >
+        #{person,jdbcType=VARCHAR},
+      </if>
+      <if test="back1 != null" >
+        #{back1,jdbcType=VARCHAR},
+      </if>
+      <if test="back2 != null" >
+        #{back2,jdbcType=VARCHAR},
+      </if>
+      <if test="back3 != null" >
+        #{back3,jdbcType=VARCHAR},
+      </if>
+      <if test="back4 != null" >
+        #{back4,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.ssm.demo.entity.TaskCaseManage" >
+    update TASK_CASE_MANAGE
+    <set >
+      <if test="taskName != null" >
+        TASK_NAME = #{taskName,jdbcType=VARCHAR},
+      </if>
+      <if test="taskTheme != null" >
+        TASK_THEME = #{taskTheme,jdbcType=VARCHAR},
+      </if>
+      <if test="taskType != null" >
+        TASK_TYPE = #{taskType,jdbcType=VARCHAR},
+      </if>
+      <if test="disposalMethod != null" >
+        DISPOSAL_METHOD = #{disposalMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="taskStatus != null" >
+        TASK_STATUS = #{taskStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        START_TIME = #{startTime,jdbcType=VARCHAR},
+      </if>
+      <if test="endTime != null" >
+        END_TIME = #{endTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        UPDATE_TIME = #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="estimatedTime != null" >
+        ESTIMATED_TIME = #{estimatedTime,jdbcType=VARCHAR},
+      </if>
+      <if test="person != null" >
+        PERSON = #{person,jdbcType=VARCHAR},
+      </if>
+      <if test="back1 != null" >
+        BACK1 = #{back1,jdbcType=VARCHAR},
+      </if>
+      <if test="back2 != null" >
+        BACK2 = #{back2,jdbcType=VARCHAR},
+      </if>
+      <if test="back3 != null" >
+        BACK3 = #{back3,jdbcType=VARCHAR},
+      </if>
+      <if test="back4 != null" >
+        BACK4 = #{back4,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.ssm.demo.entity.TaskCaseManage" >
+    update TASK_CASE_MANAGE
+    set TASK_NAME = #{taskName,jdbcType=VARCHAR},
+      TASK_THEME = #{taskTheme,jdbcType=VARCHAR},
+      TASK_TYPE = #{taskType,jdbcType=VARCHAR},
+      DISPOSAL_METHOD = #{disposalMethod,jdbcType=VARCHAR},
+      TASK_STATUS = #{taskStatus,jdbcType=VARCHAR},
+      START_TIME = #{startTime,jdbcType=VARCHAR},
+      END_TIME = #{endTime,jdbcType=VARCHAR},
+      UPDATE_TIME = #{updateTime,jdbcType=VARCHAR},
+      ESTIMATED_TIME = #{estimatedTime,jdbcType=VARCHAR},
+      PERSON = #{person,jdbcType=VARCHAR},
+      BACK1 = #{back1,jdbcType=VARCHAR},
+      BACK2 = #{back2,jdbcType=VARCHAR},
+      BACK3 = #{back3,jdbcType=VARCHAR},
+      BACK4 = #{back4,jdbcType=VARCHAR}
+    where ID = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.demo.mapper.LawCaseApplyMapper">
+
+
+	<sql id="parameters">
+		id AS id,
+		 user_name  AS userName,
+		 caption_name  AS captionName,
+		 case_content  AS caseContent,
+		 start_time  AS startTime,
+		 reason AS reason,
+		 end_time AS endTime,
+		 apply_time AS applyTime,
+		 complete_time AS completeTime,
+		 clue AS clue,
+		 complete AS complete,
+		 task_type AS taskType,
+         approve_number AS approveNumber,
+         resource AS resource,
+         dispose AS dispose,
+         date_name AS dateName
+	</sql>
+
+
+	<resultMap type="com.ssm.demo.dto.ApplyDto" id="LawCaseApplyMap">
+		<id column="id" property="id"/>
+		<collection property="postils" ofType="com.ssm.demo.entity.ResultPostil" select="getResultPostils" column="id">
+		</collection>
+		<collection property="copyMessages" ofType="com.ssm.demo.entity.CopyMessage" select="getCopyNames" column="id">
+		</collection>
+		<collection property="accessorys" ofType="com.ssm.demo.entity.Accessory" select="getAccessorys" column="date_name">
+		</collection>
+	</resultMap>
+	<!--<resultMap type="com.ssm.demo.entity.BasicsApprove" id="BasicsApproveMap">
+		<id column="id" property="id"/>
+		<collection property="postils" ofType="com.ssm.demo.entity.ResultPostil" select="getResultPostil" column="id">
+		</collection>
+	</resultMap>-->
+	<select id="getAccessorys" parameterType="String" resultType="com.ssm.demo.entity.Accessory">
+		select
+       file_name AS fileName, file_path AS  filePath
+ 		from accessory
+		where  date_name=#{dateName}
+	</select>
+	<select id="getResultPostils" parameterType="int" resultType="com.ssm.demo.entity.ResultPostil">
+		select
+	  approval_name  AS	approvalName,
+	    approval_result AS approvalResult,
+	    postil AS postil,
+	    date_time AS dateTime
+ 		from resultpostil
+		where apply_id = #{id} AND flow_name='任务审批'
+	</select>
+
+	<select id="getCopyNames" parameterType="int" resultType="com.ssm.demo.entity.CopyMessage">
+		select
+	    copy_name AS copyName,
+	    flow_name AS flowName
+ 		from copymessage
+		where apply_id = #{id} AND flow_name='任务审批'
+	</select>
+
+
+	<!--
+        <select id="getBasicsApprove" parameterType="int" resultMap="BasicsApproveMap">
+            select
+        /*	approval_name  AS	approvalName,
+            approval_result AS approvalResult,
+            postil AS postil,
+            date_time AS dateTime
+             from resultpostil*/
+             * from basicsapprove
+            where apply_id = #{id}
+        </select>
+    -->
+
+   <!--详情-->
+	<select id="getApply" resultMap="LawCaseApplyMap" parameterType="int">
+		SELECT
+         <include refid="parameters"/>
+		FROM lawcaseapply
+		where lawcaseapply.id=#{id}
+	</select>
+
+
+	<sql id="approveParameter">
+         lawcaseapply.id AS id,
+		 lawcaseapply.user_name  AS userName,
+		 lawcaseapply.caption_name  AS captionName,
+		 lawcaseapply.reason  AS reason,
+		 lawcaseapply.approve_number  AS approveNumber,
+		 lawcaseapply.start_time  AS startTime,
+		 lawcaseapply.end_time AS endTime,
+		 lawcaseapply.apply_time AS applyTime,
+		 lawcaseapply.complete_time AS completeTime,
+		 lawcaseapply.clue AS clue,
+		 lawcaseapply.complete AS complete
+
+	</sql>
+
+       <!--代我审批 ,我已审批的数据-->
+	<select id="approvePage" resultType="com.ssm.demo.entity.LawCaseApply" >
+		SELECT    <include refid="approveParameter" />
+		FROM lawcaseapply
+		inner join basicsapprove
+		where lawcaseapply.id=basicsapprove.apply_id
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		<if test="taskType!=null and taskType!=''">
+			AND lawcaseapply.task_type=#{taskType}
+		</if>
+
+			AND basicsapprove.status=#{status}
+
+		AND basicsapprove.approver=#{approver}
+	</select>
+
+	<!--代我审批 ,我已审批的总条数-->
+	<select id="getApproveCOunt" resultType="int" >
+		SELECT count(1)
+		FROM lawcaseapply
+		inner join basicsapprove
+		where lawcaseapply.id=basicsapprove.apply_id
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		<if test="taskType!=null and taskType!=''">
+			AND lawcaseapply.task_type=#{taskType}
+		</if>
+			AND basicsapprove.status=#{status}
+		AND basicsapprove.approver=#{approver}
+	</select>
+
+    <!--查询我的申请-->
+	<select id="applyPage" resultType="com.ssm.demo.entity.LawCaseApply">
+		select  <include refid="approveParameter" />
+		from lawcaseapply
+       where user_name=#{userName}
+		<if test="complete!=null and complete!=''" >
+			AND  complete=#{complete}
+		</if>
+		<if test="taskType!=null and taskType!=''">
+			AND  task_type=#{taskType}
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			AND  caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		limit #{pageNum},#{pageSize}
+	</select>
+
+     <!--查询我申请的次数次数-->
+	<select id="getApplyCount" resultType="int" parameterType="string">
+		select count(1)from lawcaseapply
+		where user_name=#{userName}
+		<if test="complete!=null and complete!=''" >
+			AND  complete=#{complete}
+		</if>
+		<if test="taskType!=null and taskType!=''">
+			AND  task_type=#{taskType}
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			AND  caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+	</select>
+
+
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.ssm.demo.dto.LawCaseApplyDto">
+	  insert into lawcaseapply
+	  (id,
+	  user_name,
+	  caption_name,
+	  case_content,
+	  start_time,
+	  end_time,
+	  reason,
+	  apply_time,
+	  clue,
+	  complete,
+	  task_type,
+	  dispose,
+	  resource,
+	  approve_number,
+	  date_name,
+	  end)
+	  values
+	  (#{id},
+	  #{userName},
+	  #{captionName},
+	  #{caseContent},
+	  #{startTime},
+	  #{endTime},
+	  #{reason},
+	  #{applyTime},
+	  #{clue},
+	  #{complete},
+	  #{taskType},
+	  #{dispose},
+	  #{resource},
+	  #{approveNumber},
+	  #{dateName},
+	  #{end})
+	</insert>
+
+	<!--修改当前的申请状态-->
+	<update id="updateCompleteById" parameterType="com.ssm.demo.entity.LawCaseApply">
+		update lawcaseapply
+		<set>
+		<if test="complete!=null and complete!=''">
+			complete=#{complete},
+		</if>
+		<if test="completeTime!=null and completeTime!=''">
+			complete_time=#{completeTime},
+		</if>
+	    </set>
+		where id=#{id}
+	</update>
+
+
+
+
+	<update id="updateApply" parameterType="com.ssm.demo.dto.ApplyDto">
+		update lawcaseapply
+		<set>
+		<if test="startTime!=null and startTime!=''">
+			start_time=#{startTime},
+		</if>
+		<if test="endTime!=null and endTime!='' ">
+			end_time=#{endTime},
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			caption_name=#{captionName},
+		</if>
+		<if test="reason!=null and reason!=''">
+			reason=#{reason},
+		</if>
+		<if test="dateName!=null and dateName!=''">
+			date_name=#{dateName},
+		</if>
+		<if test="clue!=null and clue!=''">
+			clue=#{clue},
+		</if>
+		<if test="caseContent!=null and caseContent!=''">
+			case_content=#{caseContent},
+		</if>
+		<if test="taskType!=null and taskType!=''">
+			task_type=#{taskType},
+		</if>
+		<if test="dispose!=null and dispose!=''">
+			dispose=#{dispose},
+		</if>
+		<if test="resource!=null and resource!=''">
+			resource=#{resource},
+		</if>
+		<if test="approveNumber!=null and approveNumber!=''">
+			approve_number=#{approveNumber},
+		</if>
+		</set>
+		where id=#{id}
+	</update>
+
+
+	<update id="revocation" >
+		update lawcaseapply set
+		complete=4,
+		complete_time=#{completeTime}
+		where id=#{id}
+	</update>
+
+	<update id="updateEndTask" >
+		update lawcaseapply set
+		end=1,
+		where id=#{applyId}
+	</update>
+
+
+</mapper>

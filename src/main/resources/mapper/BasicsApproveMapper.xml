@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.demo.mapper.BasicsApproveMapper">
+
+	<sql id="parameters">
+		id AS id,   apply_id  AS applyId,
+		 apply_name  AS applyName,
+		 approve_node AS approveNode,
+		 node AS node,
+		 approver AS approver,
+		 flow_name AS flowName,
+		 status AS status,
+		 common AS common,
+		 start_time AS startTime,
+		 end_time AS endTime,
+		 caption_name AS captionName,
+		  apply_time AS applyTime,
+		 complete_time AS completeTime,
+		task_type AS  taskType,
+		complete AS complete
+	</sql>
+
+	<sql id="getApproverByStatus">
+		approver AS approver,
+		 approve_node AS approveNode,
+	  		 node AS node
+	</sql>
+
+	<!--查看审批的条数-->
+	<select id="getCount" resultType="int" >
+		select count(1) from basicsapprove
+		where  approver=#{userName}  AND  status=#{status}
+		<if test="flowName!='全部'">
+			AND  flow_name=#{flowName}
+		</if>
+		<if test="captionName!=null and captionName!=''">
+			AND  caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+	</select>
+   <!--查看审批数据-->
+	<select id="ApprovePage" resultType="com.ssm.demo.entity.BasicsApprove" >
+		select <include refid="parameters"/> from basicsapprove
+		where  approver=#{userName}  AND  status=#{status}
+		<if test="flowName!='全部'">
+		AND  flow_name=#{flowName}
+	    </if>
+		<if test="captionName!=null and captionName!=''">
+			AND  caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		limit #{pageNum},#{pageSize}
+	</select>
+
+	<!--查询自己申请-->
+	<select id="Applys" resultType="com.ssm.demo.entity.BasicsApprove">
+		select <include refid="parameters"/>   from basicsapprove
+		where apply_name=#{applyName}
+
+		<if test="flowName!='全部'">
+			AND  flow_name=#{flowName}
+		</if>
+		<if test="complete!=0">
+			AND  complete=#{complete}
+		</if>
+		AND  approve_node=1
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+		limit #{pageNum},#{pageSize}
+	</select>
+   <!--查询自己申请的次数-->
+	<select id="getApplysCount" resultType="int" parameterType="com.ssm.demo.entity.BasicsApprove">
+		select count(1) from basicsapprove
+		where apply_name=#{applyName}
+		<if test="flowName!='全部'">
+			AND  flow_name=#{flowName}
+		</if>
+		<if test="complete!=0">
+			AND  complete=#{complete}
+		</if>
+		AND  approve_node=1
+		<if test="captionName!=null and captionName!=''">
+			AND lawcaseapply.caption_name LIKE  CONCAT('%',#{captionName},'%')
+		</if>
+	</select>
+
+
+   <!--查询现在是不是这个审批以及数据-->
+	<select id="getApproverByStatus" resultType="com.ssm.demo.entity.BasicsApprove" parameterType="com.ssm.demo.dto.BasicsApproveDto">
+		select <include refid="getApproverByStatus"/>   from basicsapprove
+		where apply_id=#{applyId} AND  status=0
+		<if test="flowName!=null and flowName!=''">
+			AND  flow_name=#{flowName}
+		</if>
+	</select>
+
+
+
+
+
+
+
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.ssm.demo.dto.BasicsApproveDto">
+	  insert into basicsapprove
+	  (id,
+	  apply_id,
+	  apply_name,
+	  approve_node,
+	  node,
+	  approver,
+	  flow_name,
+	  status,
+	  reason,
+	  caption_name,
+	  start_time,
+	  common,
+	  end_time,
+	  apply_time,
+	  task_type)
+	  values
+	  (#{id},
+	  #{applyId},
+	  #{applyName},
+	  #{approveNode},
+	  #{node},
+	  #{approver},
+	  #{flowName},
+	  #{status},
+	  #{reason},
+	  #{captionName},
+	  #{startTime},
+	  #{common},
+	  #{endTime},
+	  #{applyTime},
+	  #{taskType})
+	</insert>
+
+
+	<update id="updateStatusById" parameterType="int">
+		update basicsapprove set  status=#{status}	where id=#{id}
+	</update>
+
+   <!--修改审批状态-->
+	<update id="updateStatusByApproveNode" parameterType="com.ssm.demo.dto.BasicsApproveDto">
+		update basicsapprove
+		<set>
+			<if test="status!=-100 and status!=''">
+				status=#{status},
+			</if>
+			<if test="complete!=null and complete!=''">
+				complete=#{complete},
+			</if>
+		</set>
+		where  apply_id=#{applyId} AND flow_name=#{flowName}
+		<if test="approveNode!=-1">
+			AND  approve_node=#{approveNode}
+		</if>
+	</update>
+
+
+	<!--<update id="revocation" >
+		update basicsapprove set
+		status=1
+		where apply_id=#{applyId} AND    apply_name=#{applyName} AND flow_name=#{flowName}
+	</update>-->
+    <!--撤销申请-->
+	<update id="revocations" >
+		update basicsapprove set
+		complete=4
+		where apply_id=#{applyId} AND flow_name=#{flowName}
+	</update>
+</mapper>
